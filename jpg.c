@@ -19,9 +19,8 @@ void read(const char* img, unsigned char **jpegBuf, unsigned long* jpegSize) {
     fclose(jpegFile);  jpegFile = NULL;
 }
 
-void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize) {
+void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize, unsigned char** imgBuf) {
     int inSubsamp, inColorspace;
-    unsigned char *imgBuf = NULL;
     int width, height;
     int pixelFormat;
     int flags = TJFLAG_FASTUPSAMPLE | TJFLAG_FASTDCT; /* / TJFLAG_ACCURATEDCT */
@@ -34,16 +33,16 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize)
 
     pixelFormat = TJPF_RGB;
 
-    if ((imgBuf = (unsigned char *)tjAlloc(width * height *
+    if ((*imgBuf = (unsigned char *)tjAlloc(width * height *
                                            tjPixelSize[pixelFormat])) == NULL) abort();
 
-    if (tjDecompress2(tjInstance, jpegBuf, jpegSize, imgBuf, width, 0, height,
+    if (tjDecompress2(tjInstance, jpegBuf, jpegSize, *imgBuf, width, 0, height,
                       pixelFormat, flags) < 0) abort();
 }
 
 int main() {
 	for(int i = 0; i < 5; ++i) {
-	unsigned char *jpegBuf = NULL;
+	unsigned char *jpegBuf = NULL, *imgBuf = NULL;
 	unsigned long jpegSize = 0;
 	read("test.jpg", &jpegBuf, &jpegSize);
 
@@ -52,9 +51,11 @@ int main() {
 	
 	struct timespec start, end;
 	if(clock_gettime(CLOCK_REALTIME, &start) != 0) abort();
-	decode(tjInstance, jpegBuf, jpegSize);
+	decode(tjInstance, jpegBuf, jpegSize, &imgBuf);
 	if(clock_gettime(CLOCK_REALTIME, &end) != 0) abort();
+
         tjFree(jpegBuf);  jpegBuf = NULL;
+	tjFree(imgBuf); imgBuf = NULL;
 	tjDestroy(tjInstance);  tjInstance = NULL;
 
 	time_t dsec = end.tv_sec - start.tv_sec;
