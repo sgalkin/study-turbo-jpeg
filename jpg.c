@@ -27,10 +27,10 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize,
 
     if (tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height,
                             &inSubsamp, &inColorspace) < 0) abort();
-
+    /*
     printf("Image:  %d x %d pixels, %d subsampling, %d colorspace\n",
            width, height, inSubsamp, inColorspace);
-
+    */
     pixelFormat = TJPF_RGB;
 
     if ((*imgBuf = (unsigned char *)tjAlloc(width * height *
@@ -41,27 +41,32 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize,
 }
 
 int main() {
-	for(int i = 0; i < 5; ++i) {
-	unsigned char *jpegBuf = NULL, *imgBuf = NULL;
-	unsigned long jpegSize = 0;
-	read("test.jpg", &jpegBuf, &jpegSize);
+    static const unsigned long long sec = 1000000000;
 
-	tjhandle tjInstance = NULL;
-	if ((tjInstance = tjInitDecompress()) == NULL) abort();
-	
-	struct timespec start, end;
-	if(clock_gettime(CLOCK_REALTIME, &start) != 0) abort();
-	decode(tjInstance, jpegBuf, jpegSize, &imgBuf);
-	if(clock_gettime(CLOCK_REALTIME, &end) != 0) abort();
+    unsigned long long avg = 0;
+    const size_t samples = 100;
+	for(int i = 0; i < samples; ++i) {
+        unsigned char *jpegBuf = NULL, *imgBuf = NULL;
+        unsigned long jpegSize = 0;
+        read("test.jpg", &jpegBuf, &jpegSize);
+
+        tjhandle tjInstance = NULL;
+        if ((tjInstance = tjInitDecompress()) == NULL) abort();
+
+        struct timespec start, end;
+        if(clock_gettime(CLOCK_REALTIME, &start) != 0) abort();
+        decode(tjInstance, jpegBuf, jpegSize, &imgBuf);
+        if(clock_gettime(CLOCK_REALTIME, &end) != 0) abort();
 
         tjFree(jpegBuf);  jpegBuf = NULL;
-	tjFree(imgBuf); imgBuf = NULL;
-	tjDestroy(tjInstance);  tjInstance = NULL;
+        tjFree(imgBuf); imgBuf = NULL;
+        tjDestroy(tjInstance);  tjInstance = NULL;
 
-	time_t dsec = end.tv_sec - start.tv_sec;
-	long dnsec = end.tv_nsec - start.tv_nsec;
-	if(dnsec < 0) { dnsec += 1000000000; dsec -= 1; }
-	printf("Detlta %ld.%09ld\n", dsec, dnsec);
-	}
+        unsigned long long nstart = sec*start.tv_sec + start.tv_nsec;
+        unsigned long long nend = sec*end.tv_sec + end.tv_nsec;
+        avg += (nend - nstart);
+    }
+
+	printf("Avg time (%ld sameples): %.09f s\n", samples, (avg/(float)(sec))/samples);
 	return 0;
 }
