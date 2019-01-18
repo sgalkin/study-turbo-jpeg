@@ -23,7 +23,7 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize,
     int inSubsamp, inColorspace;
     int width, height;
     int pixelFormat;
-    int flags = TJFLAG_FASTUPSAMPLE | TJFLAG_FASTDCT; /* / TJFLAG_ACCURATEDCT */
+    int flags = TJFLAG_NOREALLOC | TJFLAG_FASTUPSAMPLE | TJFLAG_FASTDCT; /* / TJFLAG_ACCURATEDCT */
 
     if (tjDecompressHeader3(tjInstance, jpegBuf, jpegSize, &width, &height,
                             &inSubsamp, &inColorspace) < 0) abort();
@@ -31,7 +31,7 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize,
     printf("Image:  %d x %d pixels, %d subsampling, %d colorspace\n",
            width, height, inSubsamp, inColorspace);
     */
-    pixelFormat = TJPF_RGB;
+    pixelFormat = TJPF_RGBX;  // ~3ms faster than TJPF_RGB
 
     if ((*imgBuf = (unsigned char *)tjAlloc(width * height *
                                            tjPixelSize[pixelFormat])) == NULL) abort();
