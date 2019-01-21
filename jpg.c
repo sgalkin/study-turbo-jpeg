@@ -46,15 +46,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    unsigned char *jpegBuf = NULL;
+    unsigned long jpegSize = 0;
+    read(argv[1], &jpegBuf, &jpegSize);
+
     static const unsigned long long sec = 1000000000;
 
     unsigned long long avg = 0;
     const size_t samples = 100;
 	for(size_t i = 0; i < samples; ++i) {
-        unsigned char *jpegBuf = NULL, *imgBuf = NULL;
-        unsigned long jpegSize = 0;
-        read("test.jpg", &jpegBuf, &jpegSize);
-
+        unsigned char *imgBuf = NULL;
         tjhandle tjInstance = NULL;
         if ((tjInstance = tjInitDecompress()) == NULL) abort();
 
@@ -63,7 +64,6 @@ int main(int argc, char** argv) {
         decode(tjInstance, jpegBuf, jpegSize, &imgBuf);
         if(clock_gettime(CLOCK_REALTIME, &end) != 0) abort();
 
-        tjFree(jpegBuf);  jpegBuf = NULL;
         tjFree(imgBuf); imgBuf = NULL;
         tjDestroy(tjInstance);  tjInstance = NULL;
 
@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
         avg += (nend - nstart);
     }
 
+    tjFree(jpegBuf);  jpegBuf = NULL;
 	printf("Avg time (%ld sameples): %.09f s\n", samples, (avg/(float)(sec))/samples);
 	return 0;
 }
