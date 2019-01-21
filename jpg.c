@@ -40,12 +40,17 @@ void decode(tjhandle tjInstance, unsigned char* jpegBuf, unsigned long jpegSize,
                       pixelFormat, flags) < 0) abort();
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if(argc != 2) {
+        printf("Usage: %s file.jpg\n", argv[0]);
+        return 1;
+    }
+
     static const unsigned long long sec = 1000000000;
 
     unsigned long long avg = 0;
     const size_t samples = 100;
-	for(int i = 0; i < samples; ++i) {
+	for(size_t i = 0; i < samples; ++i) {
         unsigned char *jpegBuf = NULL, *imgBuf = NULL;
         unsigned long jpegSize = 0;
         read("test.jpg", &jpegBuf, &jpegSize);
